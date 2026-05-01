@@ -1,78 +1,168 @@
 import React from 'react';
+import { useStore } from '../store/useStore';
+import FeatureCard from '../components/dashboard/FeatureCard';
+import TaskBoard from '../components/dashboard/TaskBoard';
+import CodePreview from '../components/dashboard/CodePreview';
+import { 
+  Sparkles, 
+  Terminal, 
+  Database, 
+  Layers, 
+  Zap,
+  ArrowRight,
+  Plus
+} from 'lucide-react';
+import { motion } from 'framer-motion';
 
 const DashboardPage = () => {
-  return (
-    <div className="space-y-8">
-      <div>
-        <h2 className="text-3xl font-extrabold text-gray-900">Dashboard</h2>
-        <p className="mt-2 text-lg text-gray-500">Overview of your AI generated resources and projects.</p>
-      </div>
-      
-      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-        <div className="bg-white overflow-hidden shadow-lg rounded-2xl border border-gray-100 hover:shadow-xl transition-shadow">
-          <div className="p-6">
-            <div className="flex items-center">
-              <div className="flex-shrink-0 bg-blue-100 rounded-md p-3">
-                <svg className="h-6 w-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
-              </div>
-              <div className="ml-5 w-0 flex-1">
-                <dl>
-                  <dt className="text-sm font-medium text-gray-500 truncate">Ideas Analyzed</dt>
-                  <dd className="flex items-baseline">
-                    <div className="text-3xl font-semibold text-gray-900">0</div>
-                  </dd>
-                </dl>
-              </div>
-            </div>
-          </div>
-          <div className="bg-gray-50 px-6 py-4 border-t border-gray-100">
-            <div className="text-sm">
-              <span className="font-medium text-indigo-600 hover:text-indigo-500 cursor-pointer">View all</span>
-            </div>
-          </div>
-        </div>
+  const { blueprint, isDark } = useStore();
 
-        <div className="bg-white overflow-hidden shadow-lg rounded-2xl border border-gray-100 hover:shadow-xl transition-shadow">
-          <div className="p-6">
-            <div className="flex items-center">
-              <div className="flex-shrink-0 bg-green-100 rounded-md p-3">
-                 <svg className="h-6 w-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-              </div>
-              <div className="ml-5 w-0 flex-1">
-                <dl>
-                  <dt className="text-sm font-medium text-gray-500 truncate">Business Plans Generated</dt>
-                  <dd className="flex items-baseline">
-                    <div className="text-3xl font-semibold text-gray-900">0</div>
-                  </dd>
-                </dl>
-              </div>
-            </div>
-          </div>
-          <div className="bg-gray-50 px-6 py-4 border-t border-gray-100">
-            <div className="text-sm">
-              <span className="font-medium text-indigo-600 hover:text-indigo-500 cursor-pointer">View all</span>
-            </div>
-          </div>
+  if (!blueprint) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] px-4 text-center">
+        <div className="w-16 h-16 bg-indigo-600/10 rounded-2xl flex items-center justify-center text-indigo-500 mb-6">
+          <Sparkles size={32} />
         </div>
-        
+        <h2 className={`text-2xl font-bold mb-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>No Active Blueprint</h2>
+        <p className={`text-sm max-w-xs mx-auto mb-8 ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>
+          Generate a new product blueprint to see your technical architecture and tasks here.
+        </p>
+        <button className="flex items-center gap-2 px-6 py-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-semibold transition-all shadow-lg shadow-indigo-600/20">
+          <Plus size={18} />
+          Create New Idea
+        </button>
       </div>
-      
-      {/* Skeleton for recent activity */}
-      <div className="bg-white shadow-lg rounded-2xl p-6 mt-8 border border-gray-100">
-        <h3 className="text-xl font-bold text-gray-900 mb-4">Recent Activity</h3>
-        <div className="animate-pulse flex space-x-4">
-          <div className="rounded-full bg-gray-200 h-10 w-10"></div>
-          <div className="flex-1 space-y-4 py-1">
-            <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-            <div className="space-y-2">
-              <div className="h-4 bg-gray-200 rounded"></div>
-              <div className="h-4 bg-gray-200 rounded w-5/6"></div>
+    );
+  }
+
+  return (
+    <div className="px-8 py-10 space-y-12">
+      {/* Overview Header */}
+      <div className="space-y-4">
+        <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.2em] text-indigo-500">
+          <Sparkles size={14} />
+          Active Intelligence
+        </div>
+        <h1 className={`text-4xl font-bold tracking-tight ${isDark ? 'text-white' : 'text-gray-900'}`}>
+          {blueprint.product_summary.title}
+        </h1>
+        <p className={`text-lg max-w-3xl leading-relaxed ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+          {blueprint.product_summary.description}
+        </p>
+      </div>
+
+      {/* 2-Column Section for Features and Tasks */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+        {/* Features Column */}
+        <section className="space-y-6">
+          <div className="flex items-center justify-between">
+            <h2 className={`text-xl font-bold flex items-center gap-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>
+              <Zap size={20} className="text-indigo-500" />
+              Core Features
+            </h2>
+            <button className="text-xs text-indigo-500 font-bold uppercase tracking-widest hover:underline">Edit All</button>
+          </div>
+          <div className="grid grid-cols-1 gap-4">
+            {blueprint.features.map((feature, idx) => (
+              <FeatureCard key={idx} feature={feature} />
+            ))}
+          </div>
+        </section>
+
+        {/* Tasks Column */}
+        <section className="space-y-6">
+          <div className="flex items-center justify-between">
+            <h2 className={`text-xl font-bold flex items-center gap-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>
+              <Terminal size={20} className="text-indigo-500" />
+              Technical Roadmap
+            </h2>
+            <div className="flex items-center gap-2">
+               <span className="text-[10px] font-bold text-gray-500 uppercase">0% Complete</span>
             </div>
           </div>
-        </div>
+          <TaskBoard tasks={blueprint.tasks} />
+        </section>
       </div>
+
+      {/* APIs and Schema Section */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+         {/* APIs */}
+         <section className="space-y-6">
+            <h2 className={`text-xl font-bold flex items-center gap-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>
+              <Layers size={20} className="text-indigo-500" />
+              API Endpoints
+            </h2>
+            <div className={`rounded-2xl border overflow-hidden ${isDark ? 'border-white/5 bg-card-dark' : 'border-gray-200 bg-card-light shadow-sm'}`}>
+              <table className="w-full text-left">
+                <thead>
+                  <tr className={`text-[10px] uppercase font-bold tracking-widest ${isDark ? 'bg-white/[0.02] text-gray-500' : 'bg-gray-50 text-gray-400'}`}>
+                    <th className="px-6 py-4">Method</th>
+                    <th className="px-6 py-4">Endpoint</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-white/5">
+                  {blueprint.apis.map((api, idx) => (
+                    <tr key={idx} className="group hover:bg-white/[0.01] transition-colors">
+                      <td className="px-6 py-4">
+                        <span className={`text-[10px] font-bold px-2 py-1 rounded ${
+                          api.method === 'GET' ? 'bg-blue-500/10 text-blue-400' :
+                          api.method === 'POST' ? 'bg-green-500/10 text-green-400' :
+                          'bg-amber-500/10 text-amber-400'
+                        }`}>
+                          {api.method}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 font-mono text-xs text-gray-400 group-hover:text-white transition-colors">
+                        {api.endpoint}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+         </section>
+
+         {/* Database Schema */}
+         <section className="space-y-6">
+            <h2 className={`text-xl font-bold flex items-center gap-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>
+              <Database size={20} className="text-indigo-500" />
+              Data Schema
+            </h2>
+            <div className={`rounded-2xl border p-6 ${isDark ? 'border-white/5 bg-card-dark' : 'border-gray-200 bg-card-light shadow-sm'}`}>
+              {blueprint.database_schema.collections.map((coll, idx) => (
+                <div key={idx} className="space-y-3">
+                  <div className="flex items-center gap-2 text-xs font-bold text-gray-500 uppercase tracking-widest">
+                    <Database size={14} />
+                    {coll.name}
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {coll.fields.map((field, fidx) => (
+                      <div key={fidx} className={`px-3 py-1.5 rounded-lg border text-[11px] font-medium flex items-center gap-2 ${
+                        isDark ? 'bg-white/5 border-white/5 text-gray-400' : 'bg-gray-50 border-gray-200 text-gray-600'
+                      }`}>
+                        <span className="text-indigo-500">{field.field_name}</span>
+                        <span className="text-gray-600 opacity-50">/</span>
+                        <span>{field.type}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+         </section>
+      </div>
+
+      {/* Code Preview Section */}
+      <section className="space-y-6 pb-20">
+        <h2 className={`text-xl font-bold flex items-center gap-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>
+          <Terminal size={20} className="text-indigo-500" />
+          Starter Code
+        </h2>
+        <CodePreview code={blueprint.starter_code} />
+      </section>
     </div>
   );
 };
 
 export default DashboardPage;
+

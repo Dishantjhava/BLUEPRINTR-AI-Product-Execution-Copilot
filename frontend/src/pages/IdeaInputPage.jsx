@@ -1,38 +1,200 @@
 import React, { useState } from 'react';
+import { useStore } from '../store/useStore';
+import { 
+  Sparkles, 
+  ArrowRight, 
+  Zap, 
+  Terminal, 
+  Search,
+  MessageSquare,
+  Lightbulb,
+  Rocket
+} from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 
 const IdeaInputPage = () => {
   const [idea, setIdea] = useState('');
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [error, setError] = useState(null);
+  const { setBlueprint, isDark, addMessage } = useStore();
+  const navigate = useNavigate();
+
+  const handleGenerate = async (e) => {
+    if (e) e.preventDefault();
+    if (!idea.trim()) return;
+
+    setIsGenerating(true);
+    setError(null);
+    addMessage({ role: 'user', content: `Generate blueprint for: ${idea}` });
+
+    try {
+      const response = await fetch('/api/askAI', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ idea }),
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        setBlueprint(data.solution);
+        addMessage({ role: 'assistant', content: `Blueprint for "${data.solution.product_summary.title}" has been generated successfully! You can view it in the dashboard.` });
+        navigate('/dashboard');
+      } else {
+        setError(data.error || 'Failed to generate blueprint');
+        addMessage({ role: 'assistant', content: `Sorry, I encountered an error: ${data.error || 'Failed to generate blueprint'}` });
+      }
+    } catch (err) {
+      setError('Connection failed. Please try again.');
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const suggestions = [
+    "A fitness app with AI coaching",
+    "SaaS for freelance tax management",
+    "Real-time translation for video calls",
+    "AI-powered inventory for small shops"
+  ];
 
   return (
-    <div className="bg-white shadow-xl sm:rounded-2xl p-8 max-w-3xl mx-auto border border-gray-100">
-      <h2 className="text-3xl font-extrabold text-gray-900 mb-2">Input Your Idea</h2>
-      <p className="text-lg text-gray-500 mb-8">Describe your startup idea and let the AI copilot build its architecture, wireframes, and business plans for you.</p>
-      
-      <form onSubmit={(e) => e.preventDefault()} className="space-y-6">
-        <div>
-          <label htmlFor="idea" className="block text-sm font-semibold text-gray-700 mb-2">Your Idea</label>
-          <div className="relative rounded-md shadow-sm">
+    <div className="max-w-4xl mx-auto px-6 py-20 space-y-12">
+      {/* Hero Section */}
+      <div className="text-center space-y-6">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/10 text-indigo-500 text-xs font-bold uppercase tracking-widest"
+        >
+          <Zap size={14} />
+          Powered by Gemini 2.0
+        </motion.div>
+        
+        <h1 className={`text-5xl font-bold tracking-tight leading-tight ${isDark ? 'text-white' : 'text-gray-900'}`}>
+          From Idea to <span className="text-indigo-500">Architecture</span> <br />
+          in Seconds.
+        </h1>
+        <p className={`text-lg max-w-2xl mx-auto ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+          Describe your product idea and our AI architect will generate a complete technical blueprint including features, tasks, APIs, and starter code.
+        </p>
+      </div>
+
+      {/* Input Section */}
+      <div className="relative group">
+        <div className="absolute -inset-1 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-2xl blur opacity-25 group-focus-within:opacity-50 transition duration-1000 group-hover:duration-200"></div>
+        <form 
+          onSubmit={handleGenerate}
+          className={`relative p-2 rounded-2xl border transition-all ${
+            isDark ? 'bg-card-dark border-white/5' : 'bg-card-light border-gray-200 shadow-xl'
+          }`}
+        >
+          <div className="flex items-center gap-4 px-4 py-2">
+            <Search className="text-gray-500" size={20} />
             <textarea
-              id="idea"
-              rows={5}
               value={idea}
               onChange={(e) => setIdea(e.target.value)}
-              className="block w-full rounded-xl border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 sm:text-lg p-4 border bg-gray-50 transition-colors"
-              placeholder="e.g. I want to build a platform that connects freelance designers with boutique..."
+              placeholder="Describe your startup idea (e.g., A subscription coffee app for local roasters...)"
+              className="w-full bg-transparent border-none focus:ring-0 text-lg resize-none min-h-[100px] py-4 placeholder-gray-600"
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault();
+                  handleGenerate();
+                }
+              }}
             />
           </div>
-        </div>
-        
-        <div className="flex justify-end">
-          <button 
-            type="submit" 
-            className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-xl shadow-md text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all transform hover:-translate-y-0.5"
+          
+          <div className={`flex items-center justify-between px-4 py-3 border-t ${
+            isDark ? 'border-white/5' : 'border-gray-100'
+          }`}>
+             <div className="flex items-center gap-4">
+                <button type="button" className="text-gray-500 hover:text-white transition-colors">
+                  <Terminal size={18} />
+                </button>
+                <button type="button" className="text-gray-500 hover:text-white transition-colors">
+                  <MessageSquare size={18} />
+                </button>
+             </div>
+             
+             <button
+              disabled={isGenerating || !idea.trim()}
+              className={`flex items-center gap-2 px-6 py-2.5 rounded-xl font-bold text-sm transition-all shadow-lg ${
+                idea.trim() 
+                  ? 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-indigo-600/20' 
+                  : 'bg-gray-800 text-gray-500 cursor-not-allowed shadow-none'
+              }`}
+             >
+              {isGenerating ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                  Architecting...
+                </>
+              ) : (
+                <>
+                  Generate Blueprint
+                  <ArrowRight size={16} />
+                </>
+              )}
+             </button>
+          </div>
+        </form>
+      </div>
+
+      {/* Error State */}
+      <AnimatePresence>
+        {error && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className="p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-500 text-sm font-medium text-center"
           >
-            <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
-            Analyze Idea
-          </button>
+            {error}
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Suggestions */}
+      <div className="space-y-4">
+        <div className={`text-xs font-bold uppercase tracking-widest text-center ${isDark ? 'text-gray-600' : 'text-gray-400'}`}>
+          Popular Templates
         </div>
-      </form>
+        <div className="flex flex-wrap justify-center gap-3">
+          {suggestions.map((s, idx) => (
+            <button
+              key={idx}
+              onClick={() => setIdea(s)}
+              className={`px-4 py-2 rounded-full border text-sm transition-all ${
+                isDark 
+                  ? 'bg-white/5 border-white/5 text-gray-400 hover:text-white hover:border-white/10' 
+                  : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'
+              }`}
+            >
+              {s}
+            </button>
+          ))}
+        </div>
+      </div>
+      
+      {/* Footer Info */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 pt-12 border-t border-white/5">
+        {[
+          { icon: Lightbulb, title: 'Ideation', desc: 'Refine your raw idea with AI-driven market insights.' },
+          { icon: Terminal, title: 'Architecture', desc: 'Get full-stack schemas, APIs, and boilerplate code.' },
+          { icon: Rocket, title: 'Execution', desc: 'Export your blueprint and start building immediately.' },
+        ].map((item, i) => (
+          <div key={i} className="text-center space-y-3">
+            <div className={`mx-auto w-10 h-10 rounded-xl flex items-center justify-center ${
+              isDark ? 'bg-white/5 text-indigo-400' : 'bg-indigo-50 text-indigo-600'
+            }`}>
+              <item.icon size={20} />
+            </div>
+            <h4 className={`font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>{item.title}</h4>
+            <p className="text-sm text-gray-500">{item.desc}</p>
+          </div>
+        ))}
+      </div>
     </div>
   );
 };
