@@ -9,11 +9,11 @@ export default {
     extend: {
       colors: {
         background: {
-          dark: '#0B0F19',
+          dark: '#000000',
           light: '#F9FAFB',
         },
         card: {
-          dark: '#111827',
+          dark: '#0A0A0A',
           light: '#FFFFFF',
         },
         accent: {
@@ -35,14 +35,26 @@ export default {
       },
       animation: {
         'glow': 'glow 2s ease-in-out infinite alternate',
+        'pulse-subtle': 'pulse-subtle 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+        'blink': 'blink 1s step-end infinite',
       },
       keyframes: {
         glow: {
           '0%': { boxShadow: '0 0 5px rgba(99, 102, 241, 0.2)' },
           '100%': { boxShadow: '0 0 20px rgba(99, 102, 241, 0.4)' },
         },
+        'pulse-subtle': {
+          '0%, 100%': { opacity: 1 },
+          '50%': { opacity: .7 },
+        },
+        blink: {
+          '0%, 100%': { opacity: 1 },
+          '50%': { opacity: 0 },
+        }
       },
     },
   },
-  plugins: [],
+  plugins: [
+    require('@tailwindcss/typography'),
+  ],
 }

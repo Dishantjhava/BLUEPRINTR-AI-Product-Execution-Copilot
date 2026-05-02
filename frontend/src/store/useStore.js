@@ -16,6 +16,21 @@ export const useStore = create(
       blueprint: null,
       setBlueprint: (data) => set({ blueprint: data }),
       
+      // Projects History State
+      projects: [],
+      addProject: (project) => set((state) => ({
+        projects: [project, ...state.projects]
+      })),
+
+      // User Profile State
+      userProfile: { name: 'Dishant Jhava', email: 'dishantjava06690@gmail.com', initials: 'DJ' },
+      updateProfile: (profile) => set({ userProfile: { ...profile, initials: profile.name.split(' ').map(n => n[0]).join('').toUpperCase() || 'U' } }),
+
+      // AI Preferences State
+      aiPreferences: { model: 'Gemini 2.0 Pro (Recommended)', apiKey: '' },
+      updateAiPreferences: (prefs) => set((state) => ({ aiPreferences: { ...state.aiPreferences, ...prefs } })),
+      
+      
       // Chat State
       isChatOpen: true,
       toggleChat: () => set((state) => ({ isChatOpen: !state.isChatOpen })),
@@ -33,7 +48,12 @@ export const useStore = create(
     }),
     {
       name: 'blueprintr-storage',
-      partialize: (state) => ({ isDark: state.isDark }),
+      partialize: (state) => ({ 
+        isDark: state.isDark,
+        projects: state.projects,
+        userProfile: state.userProfile,
+        aiPreferences: state.aiPreferences
+      }),
     }
   )
 );

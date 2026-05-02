@@ -12,12 +12,13 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
+import GenerationLoader from '../components/GenerationLoader';
 
 const IdeaInputPage = () => {
   const [idea, setIdea] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState(null);
-  const { setBlueprint, isDark, addMessage } = useStore();
+  const { setBlueprint, isDark, addMessage, addProject, aiPreferences } = useStore();
   const navigate = useNavigate();
 
   const handleGenerate = async (e) => {
@@ -32,12 +33,23 @@ const IdeaInputPage = () => {
       const response = await fetch('/api/askAI', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ idea }),
+        body: JSON.stringify({ 
+          idea, 
+          customApiKey: aiPreferences?.apiKey || undefined 
+        }),
       });
 
       const data = await response.json();
       if (data.success) {
         setBlueprint(data.solution);
+        addProject({
+          id: Date.now(),
+          name: data.solution.product_summary?.title || idea || "Untitled Project",
+          project: "Draft",
+          updated: Date.now(),
+          isActive: true,
+          data: data.solution
+        });
         addMessage({ role: 'assistant', content: `Blueprint for "${data.solution.product_summary.title}" has been generated successfully! You can view it in the dashboard.` });
         navigate('/dashboard');
       } else {
@@ -60,6 +72,14 @@ const IdeaInputPage = () => {
 
   return (
     <div className="max-w-4xl mx-auto px-6 py-20 space-y-12">
+      {isGenerating ? (
+        <GenerationLoader />
+      ) : (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="space-y-12"
+        >
       {/* Hero Section */}
       <div className="text-center space-y-6">
         <motion.div
@@ -86,7 +106,7 @@ const IdeaInputPage = () => {
         <form 
           onSubmit={handleGenerate}
           className={`relative p-2 rounded-2xl border transition-all ${
-            isDark ? 'bg-card-dark border-white/5' : 'bg-card-light border-gray-200 shadow-xl'
+            isDark ? 'bg-[#0A0A0A] border-[#222222]' : 'bg-white border-gray-200 shadow-xl'
           }`}
         >
           <div className="flex items-center gap-4 px-4 py-2">
@@ -95,7 +115,7 @@ const IdeaInputPage = () => {
               value={idea}
               onChange={(e) => setIdea(e.target.value)}
               placeholder="Describe your startup idea (e.g., A subscription coffee app for local roasters...)"
-              className="w-full bg-transparent border-none focus:ring-0 text-lg resize-none min-h-[100px] py-4 placeholder-gray-600"
+              className="w-full bg-transparent border-none focus:ring-0 focus:outline-none text-lg resize-none min-h-[100px] py-4 placeholder-gray-600"
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && !e.shiftKey) {
                   e.preventDefault();
@@ -106,7 +126,7 @@ const IdeaInputPage = () => {
           </div>
           
           <div className={`flex items-center justify-between px-4 py-3 border-t ${
-            isDark ? 'border-white/5' : 'border-gray-100'
+            isDark ? 'border-[#222222]' : 'border-gray-100'
           }`}>
              <div className="flex items-center gap-4">
                 <button type="button" className="text-gray-500 hover:text-white transition-colors">
@@ -167,7 +187,7 @@ const IdeaInputPage = () => {
               onClick={() => setIdea(s)}
               className={`px-4 py-2 rounded-full border text-sm transition-all ${
                 isDark 
-                  ? 'bg-white/5 border-white/5 text-gray-400 hover:text-white hover:border-white/10' 
+                  ? 'bg-[#111111] border-[#222222] text-gray-400 hover:text-white hover:border-gray-500' 
                   : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'
               }`}
             >
@@ -178,7 +198,7 @@ const IdeaInputPage = () => {
       </div>
       
       {/* Footer Info */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 pt-12 border-t border-white/5">
+      <div className={`grid grid-cols-1 md:grid-cols-3 gap-8 pt-12 border-t ${isDark ? 'border-[#222222]' : 'border-gray-200'}`}>
         {[
           { icon: Lightbulb, title: 'Ideation', desc: 'Refine your raw idea with AI-driven market insights.' },
           { icon: Terminal, title: 'Architecture', desc: 'Get full-stack schemas, APIs, and boilerplate code.' },
@@ -195,6 +215,8 @@ const IdeaInputPage = () => {
           </div>
         ))}
       </div>
+      </motion.div>
+      )}
     </div>
   );
 };

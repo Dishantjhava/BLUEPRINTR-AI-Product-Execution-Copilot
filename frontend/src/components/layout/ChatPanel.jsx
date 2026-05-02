@@ -7,10 +7,12 @@ import {
   X,
   Maximize2,
   Minimize2,
-  Trash2
+  Trash2,
+  Download
 } from 'lucide-react';
 import { useStore } from '../../store/useStore';
 import { motion, AnimatePresence } from 'framer-motion';
+import ReactMarkdown from 'react-markdown';
 
 const ChatPanel = () => {
   const { isDark, isChatOpen, toggleChat, messages, addMessage, clearMessages } = useStore();
@@ -23,20 +25,55 @@ const ChatPanel = () => {
     }
   }, [messages]);
 
-  const handleSend = (e) => {
+  const handleSend = async (e) => {
     e.preventDefault();
     if (!input.trim()) return;
 
-    addMessage({ role: 'user', content: input });
+    const userMessage = { role: 'user', content: input };
+    addMessage(userMessage);
     setInput('');
     
-    // Simulate AI response
-    setTimeout(() => {
-      addMessage({ 
-        role: 'assistant', 
-        content: 'I am analyzing your context and the generated blueprint. How can I help you refine the technical specifications?' 
+    try {
+      const { blueprint, aiPreferences, messages: currentMessages } = useStore.getState();
+      
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          messages: [...currentMessages, userMessage],
+          blueprint,
+          customApiKey: aiPreferences?.apiKey || undefined
+        })
       });
-    }, 1000);
+
+      const data = await response.json();
+      if (data.success) {
+        addMessage({ role: 'assistant', content: data.reply });
+      } else {
+        addMessage({ role: 'assistant', content: "Sorry, I encountered an error. Please try again." });
+      }
+    } catch (err) {
+      addMessage({ role: 'assistant', content: "Network error occurred." });
+    }
+  };
+
+  const handleDownload = (content) => {
+    // Extract a title from the markdown if possible, otherwise use a generic name
+    let title = "implementation-plan";
+    const match = content.match(/# Implementation Plan: (.*)/);
+    if (match && match[1]) {
+      title = match[1].toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+    }
+    
+    const blob = new Blob([content], { type: 'text/markdown' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${title}.md`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
   };
 
   return (
@@ -91,12 +128,31 @@ const ChatPanel = () => {
                   }`}>
                     {msg.role === 'assistant' ? <Bot size={16} /> : <User size={16} />}
                   </div>
-                  <div className={`max-w-[80%] rounded-2xl px-4 py-3 text-sm leading-relaxed ${
+                  <div className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm leading-relaxed ${
                     msg.role === 'assistant'
                       ? (isDark ? 'bg-white/5 text-gray-200' : 'bg-gray-100 text-gray-800')
                       : 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/10'
                   }`}>
-                    {msg.content}
+                    {msg.role === 'assistant' ? (
+                      <div className="flex flex-col">
+                        <div className={`prose prose-sm max-w-none ${isDark ? 'prose-invert' : ''} prose-p:leading-relaxed prose-pre:bg-black/50 prose-pre:p-2 prose-pre:rounded-lg prose-headings:font-bold prose-headings:mt-2 prose-headings:mb-1 prose-p:my-1 prose-ul:my-1 prose-li:my-0`}>
+                          <ReactMarkdown>{msg.content}</ReactMarkdown>
+                        </div>
+                        {msg.content.length > 50 && (
+                          <button 
+                            onClick={() => handleDownload(msg.content)}
+                            className={`mt-4 self-start flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                              isDark ? 'bg-[#222222] hover:bg-[#333333] text-gray-300' : 'bg-gray-200 hover:bg-gray-300 text-gray-700'
+                            }`}
+                          >
+                            <Download size={14} />
+                            Download Plan (.md)
+                          </button>
+                        )}
+                      </div>
+                    ) : (
+                      msg.content
+                    )}
                   </div>
                 </div>
               ))}

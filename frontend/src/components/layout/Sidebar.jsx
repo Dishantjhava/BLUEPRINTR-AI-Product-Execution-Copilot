@@ -7,6 +7,7 @@ import {
   Moon, 
   Sun, 
   ChevronLeft,
+  ChevronRight,
   Command,
   PlusCircle,
   History,
@@ -22,7 +23,7 @@ const Sidebar = () => {
   const navItems = [
     { icon: Lightbulb, label: 'New Idea', path: '/' },
     { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },
-    { icon: History, label: 'History', path: '/history' },
+    { icon: History, label: 'Chats', path: '/chats' },
   ];
 
   const bottomItems = [
@@ -34,14 +35,24 @@ const Sidebar = () => {
     <motion.aside
       initial={false}
       animate={{ width: isSidebarOpen ? 260 : 80 }}
-      className={`flex flex-col h-screen border-r transition-colors duration-300 ${
+      className={`relative flex flex-col h-screen border-r transition-colors duration-300 ${
         isDark 
-          ? 'bg-[#0B0F19] border-white/5 text-white' 
+          ? 'bg-[#000000] border-[#222222] text-white' 
           : 'bg-white border-gray-200 text-gray-900'
       }`}
     >
+      {/* Floating Toggle Button */}
+      <button 
+        onClick={toggleSidebar}
+        className={`absolute -right-3.5 top-5 w-7 h-7 rounded-full border flex items-center justify-center transition-colors z-50 ${
+          isDark ? 'bg-[#111111] border-[#222222] text-gray-400 hover:text-white' : 'bg-white border-gray-200 text-gray-500 hover:text-gray-900'
+        }`}
+      >
+        {isSidebarOpen ? <ChevronLeft size={14} /> : <ChevronRight size={14} />}
+      </button>
+
       {/* Header */}
-      <div className="h-16 flex items-center justify-between px-6 border-b border-white/5">
+      <div className={`h-16 flex items-center ${isSidebarOpen ? 'justify-between px-6' : 'justify-center'} border-b ${isDark ? 'border-[#222222]' : 'border-gray-200'}`}>
         <Link to="/" className="flex items-center gap-3">
           <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center text-white shadow-lg shadow-indigo-500/20">
             <Command size={18} />
@@ -50,14 +61,6 @@ const Sidebar = () => {
             <span className="font-bold tracking-tight text-lg">BLUEPRINTR</span>
           )}
         </Link>
-        {isSidebarOpen && (
-          <button 
-            onClick={toggleSidebar}
-            className="p-1.5 rounded-md hover:bg-white/5 text-gray-500 transition-colors"
-          >
-            <ChevronLeft size={16} />
-          </button>
-        )}
       </div>
 
       {/* Nav Items */}
@@ -69,7 +72,9 @@ const Sidebar = () => {
             className={`flex items-center gap-3 px-3 py-2 rounded-xl transition-all group ${
               location.pathname === item.path 
                 ? 'active-nav-item' 
-                : 'hover:bg-white/5 text-gray-500 hover:text-white'
+                : isDark 
+                  ? 'hover:bg-[#111111] text-gray-500 hover:text-white' 
+                  : 'hover:bg-gray-100 text-gray-500 hover:text-gray-900'
             }`}
           >
             <item.icon size={20} />
@@ -84,19 +89,21 @@ const Sidebar = () => {
         
         {isSidebarOpen && (
           <div className="pt-6 pb-2 px-3">
-            <button className="w-full flex items-center gap-3 px-4 py-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-semibold text-sm transition-all shadow-lg shadow-indigo-600/20">
+            <Link to="/" className="w-full flex items-center gap-3 px-4 py-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-semibold text-sm transition-all shadow-lg shadow-indigo-600/20">
               <PlusCircle size={18} />
               New Project
-            </button>
+            </Link>
           </div>
         )}
       </div>
 
       {/* Auth & System Items */}
-      <div className="p-3 border-t border-white/5 space-y-1">
+      <div className={`p-3 border-t space-y-1 ${isDark ? 'border-[#222222]' : 'border-gray-200'}`}>
         <Link
           to="/signin"
-          className="flex items-center gap-3 px-3 py-2 rounded-xl text-gray-500 hover:text-white hover:bg-white/5 transition-all group"
+          className={`flex items-center gap-3 px-3 py-2 rounded-xl transition-all group ${
+            isDark ? 'text-gray-500 hover:text-white hover:bg-[#111111]' : 'text-gray-500 hover:text-gray-900 hover:bg-gray-100'
+          }`}
         >
           <div className="w-5 h-5 flex items-center justify-center">
              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
@@ -114,13 +121,15 @@ const Sidebar = () => {
           {isSidebarOpen && <span className="font-bold text-sm">Sign Up</span>}
         </Link>
 
-        <div className="my-2 border-t border-white/5" />
+        <div className={`my-2 border-t ${isDark ? 'border-[#222222]' : 'border-gray-200'}`} />
 
         {bottomItems.map((item) => (
           <Link
             key={item.label}
             to={item.path}
-            className="flex items-center gap-3 px-3 py-2 rounded-xl text-gray-500 hover:text-white hover:bg-white/5 transition-all group"
+            className={`flex items-center gap-3 px-3 py-2 rounded-xl transition-all group ${
+              isDark ? 'text-gray-500 hover:text-white hover:bg-[#111111]' : 'text-gray-500 hover:text-gray-900 hover:bg-gray-100'
+            }`}
           >
             <item.icon size={20} />
             {isSidebarOpen && <span className="font-medium text-sm">{item.label}</span>}
@@ -129,7 +138,9 @@ const Sidebar = () => {
         
         <button
           onClick={toggleTheme}
-          className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-gray-500 hover:text-white hover:bg-white/5 transition-all"
+          className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl transition-all ${
+            isDark ? 'text-gray-500 hover:text-white hover:bg-[#111111]' : 'text-gray-500 hover:text-gray-900 hover:bg-gray-100'
+          }`}
         >
           {isDark ? <Sun size={20} /> : <Moon size={20} />}
           {isSidebarOpen && (

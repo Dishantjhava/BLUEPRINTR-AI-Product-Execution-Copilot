@@ -2,9 +2,15 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const { OpenAI } = require('openai');
+const connectDB = require('./config/db');
+const authRoutes = require('./routes/auth.routes');
+const supportRoutes = require('./routes/support.routes');
 
 const app = express();
 const port = 5000;
+
+// Connect to MongoDB
+connectDB();
 
 // Enable CORS for all routes
 app.use(cors());
@@ -12,13 +18,13 @@ app.use(cors());
 // Parse JSON request bodies
 app.use(express.json());
 
-// Initialize OpenRouter client
-const openai = new OpenAI({
+// Initialize default OpenRouter client
+const defaultOpenai = new OpenAI({
   baseURL: "https://openrouter.ai/api/v1",
-  apiKey: process.env.GEMINI_API_KEY, // Using the same env variable name for consistency
+  apiKey: process.env.GEMINI_API_KEY, 
   defaultHeaders: {
-    "HTTP-Referer": "http://localhost:3000", // Optional, for OpenRouter analytics
-    "X-Title": "BLUEPRINTR", // Optional
+    "HTTP-Referer": "http://localhost:3000",
+    "X-Title": "BLUEPRINTR",
   }
 });
 
@@ -27,11 +33,26 @@ app.get('/api/status', (req, res) => {
   res.json({ message: 'Frontend and Backend are connected successfully!' });
 });
 
+// Authentication Routes
+app.use('/api/auth', authRoutes);
+
+// Support Routes
+app.use('/api/support', supportRoutes);
+
 app.post('/api/askAI', async (req, res) => {
-  const { idea } = req.body;
+  const { idea, customApiKey } = req.body;
   if (!idea) {
     return res.status(400).json({ error: 'Idea is required' });
   }
+
+  const openai = customApiKey ? new OpenAI({
+    baseURL: "https://openrouter.ai/api/v1",
+    apiKey: customApiKey,
+    defaultHeaders: {
+      "HTTP-Referer": "http://localhost:3000",
+      "X-Title": "BLUEPRINTR",
+    }
+  }) : defaultOpenai;
 
   try {
     const prompt = `You are an expert software architect and full-stack engineer. Your task is to convert a raw product idea into a complete, structured, developer-ready blueprint.
@@ -87,6 +108,19 @@ Output format:
     "backend": "",
     "routes": "",
     "models": ""
+  },
+  "project_structure": {
+    "structure": "String containing the exact ASCII folder tree representation (e.g. ├── backend/\\n│   ├── src/...)",
+    "setupCommands": ["Command 1", "Command 2"],
+    "envVariables": [
+      { "key": "", "description": "", "example": "" }
+    ],
+    "techStack": {
+      "frontend": ["React", "Tailwind"],
+      "backend": ["Node", "Express"],
+      "database": ["MongoDB"],
+      "devops": ["Docker"]
+    }
   }
 }
 
@@ -96,6 +130,7 @@ GUIDELINES:
 - APIs should follow REST principles
 - Schema should be MongoDB-style
 - Code should be basic Express.js starter code
+- Structure MUST be a raw ASCII string that visually resembles the standard file tree output
 - Keep output structured, concise, and production-oriented`;
 
     const response = await openai.chat.completions.create({
@@ -124,6 +159,58 @@ GUIDELINES:
     } else {
       res.status(500).json({ error: error.message || 'Failed to analyze idea' });
     }
+  }
+});
+
+app.post('/api/chat', async (req, res) => {
+  const { messages, blueprint, customApiKey } = req.body;
+  if (!messages || !Array.isArray(messages)) {
+    return res.status(400).json({ error: 'Messages array is required' });
+  }
+
+  const openai = customApiKey ? new OpenAI({
+    baseURL: "https://openrouter.ai/api/v1",
+    apiKey: customApiKey,
+    defaultHeaders: {
+      "HTTP-Referer": "http://localhost:3000",
+      "X-Title": "BLUEPRINTR",
+    }
+  }) : defaultOpenai;
+
+  try {
+    const systemPrompt = `You are an AI Product Execution Copilot. You help users refine their software architecture blueprints. 
+Current blueprint context:
+${blueprint ? JSON.stringify(blueprint, null, 2) : "No blueprint generated yet."}
+
+When the user asks a question or requests improvements, you must ALWAYS format your response as a comprehensive "Implementation Plan". 
+Structure your response EXACTLY like a markdown file with the following sections:
+
+# Implementation Plan: [Topic]
+## Executive Summary
+(Brief, concise answer to their question)
+## Step-by-Step Execution
+(Detailed, numbered steps to implement the changes)
+## Code & Architecture Updates
+(Specific schema changes, API endpoints, or code snippets needed)
+## Testing & Verification
+(Brief instructions on how to test the changes)
+
+Do not output standard conversational text outside of this markdown structure. Use bolding, lists, and code blocks heavily to make it easy to read.`;
+
+    const apiMessages = [
+      { role: "system", content: systemPrompt },
+      ...messages.map(m => ({ role: m.role, content: m.content }))
+    ];
+
+    const response = await openai.chat.completions.create({
+      model: "google/gemini-2.0-flash-001",
+      messages: apiMessages,
+    });
+
+    res.json({ success: true, reply: response.choices[0].message.content });
+  } catch (error) {
+    console.error("Chat Error:", error);
+    res.status(500).json({ error: error.message || 'Failed to chat with AI' });
   }
 });
 

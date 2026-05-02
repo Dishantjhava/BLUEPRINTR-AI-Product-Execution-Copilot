@@ -3,6 +3,7 @@ import { useStore } from '../store/useStore';
 import FeatureCard from '../components/dashboard/FeatureCard';
 import TaskBoard from '../components/dashboard/TaskBoard';
 import CodePreview from '../components/dashboard/CodePreview';
+import ProjectStructure from '../components/dashboard/ProjectStructure';
 import { 
   Sparkles, 
   Terminal, 
@@ -153,12 +154,17 @@ const DashboardPage = () => {
       </div>
 
       {/* Code Preview Section */}
-      <section className="space-y-6 pb-20">
+      <section className="space-y-6">
         <h2 className={`text-xl font-bold flex items-center gap-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>
           <Terminal size={20} className="text-indigo-500" />
           Starter Code
         </h2>
         <CodePreview code={blueprint.starter_code} />
+      </section>
+
+      {/* Project Structure Section */}
+      <section className="pb-20">
+        <ProjectStructure data={blueprint.project_structure} />
       </section>
     </div>
   );
