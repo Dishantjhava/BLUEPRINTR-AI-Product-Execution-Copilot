@@ -11,9 +11,11 @@ import {
   Layers, 
   Zap,
   ArrowRight,
-  Plus
+  Plus,
+  Download
 } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { exportBlueprintToPDF } from '../utils/pdfExport';
 
 const DashboardPage = () => {
   const { blueprint, isDark } = useStore();
@@ -163,9 +165,27 @@ const DashboardPage = () => {
       </section>
 
       {/* Project Structure Section */}
-      <section className="pb-20">
+      <section className="pb-8">
         <ProjectStructure data={blueprint.project_structure} />
       </section>
+
+      {/* Download Action */}
+      <div className={`flex flex-col items-center justify-center pt-8 pb-20 border-t ${isDark ? 'border-white/10' : 'border-gray-200'}`}>
+        <button
+          onClick={() => exportBlueprintToPDF(blueprint)}
+          className={`flex items-center gap-3 px-8 py-4 rounded-2xl font-bold transition-all shadow-xl hover:-translate-y-1 ${
+            isDark 
+              ? 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-indigo-500/20' 
+              : 'bg-black hover:bg-gray-800 text-white shadow-black/10'
+          }`}
+        >
+          <Download size={20} />
+          Download Blueprint PDF
+        </button>
+        <p className={`mt-4 text-sm ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>
+          Export this structured document to feed into an AI application builder.
+        </p>
+      </div>
     </div>
   );
 };
