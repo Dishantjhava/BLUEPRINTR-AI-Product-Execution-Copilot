@@ -18,8 +18,30 @@ export const useStore = create(
       
       // Projects History State
       projects: [],
+      folders: [],
       addProject: (project) => set((state) => ({
         projects: [project, ...state.projects]
+      })),
+      addFolder: (folderName) => set((state) => {
+        if (!state.folders.includes(folderName)) {
+          return { folders: [...state.folders, folderName] };
+        }
+        return state;
+      }),
+      renameProject: (projectId, newName) => set((state) => ({
+        projects: state.projects.map(p => p.id === projectId ? { ...p, name: newName } : p)
+      })),
+      moveProjectToFolder: (projectId, folderName) => set((state) => ({
+        projects: state.projects.map(p => p.id === projectId ? { ...p, project: folderName } : p)
+      })),
+      deleteProject: (projectId) => set((state) => ({
+        projects: state.projects.filter(p => p.id !== projectId)
+      })),
+      deleteMultipleProjects: (projectIds) => set((state) => ({
+        projects: state.projects.filter(p => !projectIds.includes(p.id))
+      })),
+      moveMultipleProjects: (projectIds, folderName) => set((state) => ({
+        projects: state.projects.map(p => projectIds.includes(p.id) ? { ...p, project: folderName } : p)
       })),
 
       // User Profile State
@@ -51,6 +73,7 @@ export const useStore = create(
       partialize: (state) => ({ 
         isDark: state.isDark,
         projects: state.projects,
+        folders: state.folders,
         userProfile: state.userProfile,
         aiPreferences: state.aiPreferences
       }),
