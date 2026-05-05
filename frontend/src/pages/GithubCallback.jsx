@@ -27,6 +27,7 @@ const GithubCallback = () => {
         const res = await fetch('/api/auth/github', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
           body: JSON.stringify({ code })
         });
 
@@ -36,7 +37,6 @@ const GithubCallback = () => {
           throw new Error(data.error || 'Failed to authenticate with GitHub');
         }
 
-        localStorage.setItem('blueprintr_token', data.token);
         updateProfile({ name: data.user.name, email: data.user.email });
         navigate('/');
       } catch (err) {

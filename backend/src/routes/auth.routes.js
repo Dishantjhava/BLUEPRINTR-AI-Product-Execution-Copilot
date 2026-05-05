@@ -2,6 +2,7 @@ const express = require('express');
 const jwt = require('jsonwebtoken');
 const { OAuth2Client } = require('google-auth-library');
 const User = require('../models/User.model');
+const { protect } = require('../middleware/auth.middleware');
 
 const router = express.Router();
 const JWT_SECRET = process.env.JWT_SECRET || 'fallback_secret_for_development';
@@ -26,9 +27,15 @@ router.post('/signup', async (req, res) => {
 
     const token = jwt.sign({ userId: user._id }, JWT_SECRET, { expiresIn: '7d' });
 
+    res.cookie('blueprintr_token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 7 * 24 * 60 * 60 * 1000
+    });
+
     res.status(201).json({
       success: true,
-      token,
       user: { id: user._id, name: user.name, email: user.email }
     });
   } catch (error) {
@@ -58,9 +65,15 @@ router.post('/signin', async (req, res) => {
 
     const token = jwt.sign({ userId: user._id }, JWT_SECRET, { expiresIn: '7d' });
 
+    res.cookie('blueprintr_token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 7 * 24 * 60 * 60 * 1000
+    });
+
     res.json({
       success: true,
-      token,
       user: { id: user._id, name: user.name, email: user.email }
     });
   } catch (error) {
@@ -110,9 +123,15 @@ router.post('/google', async (req, res) => {
     // Generate our app's JWT
     const token = jwt.sign({ userId: user._id }, JWT_SECRET, { expiresIn: '7d' });
 
+    res.cookie('blueprintr_token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 7 * 24 * 60 * 60 * 1000
+    });
+
     res.json({
       success: true,
-      token,
       user: { id: user._id, name: user.name, email: user.email }
     });
 
@@ -205,9 +224,15 @@ router.post('/github', async (req, res) => {
     // 5. Generate app JWT
     const token = jwt.sign({ userId: user._id }, JWT_SECRET, { expiresIn: '7d' });
 
+    res.cookie('blueprintr_token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 7 * 24 * 60 * 60 * 1000
+    });
+
     res.json({
       success: true,
-      token,
       user: { id: user._id, name: user.name, email: user.email }
     });
 
@@ -215,6 +240,23 @@ router.post('/github', async (req, res) => {
     console.error('GitHub OAuth Error:', error);
     res.status(500).json({ error: 'Failed to authenticate with GitHub' });
   }
+});
+
+// Get current user
+router.get('/me', protect, (req, res) => {
+  res.json({
+    success: true,
+    user: { id: req.user._id, name: req.user.name, email: req.user.email }
+  });
+});
+
+// Logout
+router.post('/logout', (req, res) => {
+  res.cookie('blueprintr_token', '', {
+    httpOnly: true,
+    expires: new Date(0),
+  });
+  res.json({ success: true, message: 'Logged out successfully' });
 });
 
 module.exports = router;

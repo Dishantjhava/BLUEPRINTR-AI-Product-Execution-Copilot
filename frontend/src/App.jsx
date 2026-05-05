@@ -11,8 +11,15 @@ import ChatsPage from './pages/ChatsPage';
 import SettingsPage from './pages/SettingsPage';
 import SupportPage from './pages/SupportPage';
 
+import { useStore } from './store/useStore';
+
 function App() {
   const GOOGLE_CLIENT_ID = "354521492969-r590crs4mk6j6b9pn8lj7c9bo91r1phc.apps.googleusercontent.com";
+  const { checkAuth } = useStore();
+
+  useEffect(() => {
+    checkAuth();
+  }, [checkAuth]);
 
   return (
     <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>

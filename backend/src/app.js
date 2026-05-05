@@ -1,6 +1,7 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const cookieParser = require('cookie-parser');
 const { OpenAI } = require('openai');
 const connectDB = require('./config/db');
 const authRoutes = require('./routes/auth.routes');
@@ -12,11 +13,17 @@ const port = 5000;
 // Connect to MongoDB
 connectDB();
 
-// Enable CORS for all routes
-app.use(cors());
+// Enable CORS for all routes with credentials
+app.use(cors({
+  origin: 'http://localhost:5173', // Adjust this to match your frontend URL if different
+  credentials: true
+}));
 
 // Parse JSON request bodies
 app.use(express.json());
+
+// Parse Cookies
+app.use(cookieParser());
 
 // Initialize default OpenRouter client
 const defaultOpenai = new OpenAI({

@@ -45,8 +45,33 @@ export const useStore = create(
       })),
 
       // User Profile State
-      userProfile: { name: 'Dishant Jhava', email: 'dishantjava06690@gmail.com', initials: 'DJ' },
-      updateProfile: (profile) => set({ userProfile: { ...profile, initials: profile.name.split(' ').map(n => n[0]).join('').toUpperCase() || 'U' } }),
+      userProfile: null,
+      updateProfile: (profile) => set({ userProfile: profile ? { ...profile, initials: profile.name.split(' ').map(n => n[0]).join('').toUpperCase() || 'U' } : null }),
+      
+      checkAuth: async () => {
+        try {
+          const res = await fetch('/api/auth/me', { credentials: 'include' });
+          if (res.ok) {
+            const data = await res.json();
+            set({ userProfile: { ...data.user, initials: data.user.name.split(' ').map(n => n[0]).join('').toUpperCase() || 'U' } });
+          } else {
+            set({ userProfile: null });
+          }
+        } catch (err) {
+          console.error("Auth Check Failed:", err);
+          set({ userProfile: null });
+        }
+      },
+
+      logoutUser: async () => {
+        try {
+          await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' });
+        } catch (err) {
+          console.error("Logout Error:", err);
+        }
+        set({ userProfile: null });
+        // Optional: clear local projects/data if required
+      },
 
       // AI Preferences State
       aiPreferences: { model: 'Gemini 2.0 Pro (Recommended)', apiKey: '' },
@@ -74,7 +99,6 @@ export const useStore = create(
         isDark: state.isDark,
         projects: state.projects,
         folders: state.folders,
-        userProfile: state.userProfile,
         aiPreferences: state.aiPreferences
       }),
     }

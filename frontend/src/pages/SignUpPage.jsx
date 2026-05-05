@@ -25,6 +25,7 @@ const SignUpPage = () => {
       const res = await fetch('/api/auth/signup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({ name, email, password })
       });
       
@@ -32,7 +33,6 @@ const SignUpPage = () => {
       
       if (!res.ok) throw new Error(data.error || 'Failed to sign up');
       
-      localStorage.setItem('blueprintr_token', data.token);
       updateProfile({ name: data.user.name, email: data.user.email });
       navigate('/');
     } catch (err) {
@@ -48,6 +48,7 @@ const SignUpPage = () => {
       const res = await fetch('/api/auth/google', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({ credential: credentialResponse.credential })
       });
       
@@ -55,7 +56,6 @@ const SignUpPage = () => {
       
       if (!res.ok) throw new Error(data.error || 'Google login failed');
       
-      localStorage.setItem('blueprintr_token', data.token);
       updateProfile({ name: data.user.name, email: data.user.email });
       navigate('/');
     } catch (err) {
