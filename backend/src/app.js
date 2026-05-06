@@ -6,6 +6,8 @@ const { OpenAI } = require('openai');
 const connectDB = require('./config/db');
 const authRoutes = require('./routes/auth.routes');
 const supportRoutes = require('./routes/support.routes');
+const projectRoutes = require('./routes/project.routes');
+const blueprintRoutes = require('./routes/blueprint.routes');
 
 const app = express();
 const port = 5000;
@@ -15,7 +17,7 @@ connectDB();
 
 // Enable CORS for all routes with credentials
 app.use(cors({
-  origin: 'http://localhost:5173', // Adjust this to match your frontend URL if different
+  origin: process.env.FRONTEND_URL || ['http://localhost:5173', 'http://localhost:3000'],
   credentials: true
 }));
 
@@ -45,6 +47,12 @@ app.use('/api/auth', authRoutes);
 
 // Support Routes
 app.use('/api/support', supportRoutes);
+
+// Project Routes (protected + ownership-checked)
+app.use('/api/projects', projectRoutes);
+
+// Blueprint Routes (protected + ownership-checked)
+app.use('/api/blueprints', blueprintRoutes);
 
 app.post('/api/askAI', async (req, res) => {
   const { idea, customApiKey } = req.body;
