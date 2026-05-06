@@ -138,8 +138,8 @@ const Sidebar = () => {
             </div>
             <button
               onClick={logoutUser}
-              className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl transition-all text-left ${
-                isDark ? 'text-red-400 hover:bg-red-500/10' : 'text-red-500 hover:bg-red-50'
+              className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl transition-all text-left group ${
+                isDark ? 'text-gray-500 hover:text-white hover:bg-[#111111]' : 'text-gray-500 hover:text-gray-900 hover:bg-gray-100'
               }`}
             >
               <div className="w-5 h-5 flex items-center justify-center">
@@ -177,6 +177,14 @@ const Sidebar = () => {
           )}
         </button>
       </div>
+      {/* Version badge */}
+      {isSidebarOpen && (
+        <div className={`px-6 py-3 ${isDark ? 'text-gray-700' : 'text-gray-300'}`}>
+          <span className="text-[10px] font-semibold tracking-widest uppercase">
+            BLUEPRINTR · v1.0.4 Beta
+          </span>
+        </div>
+      )}
     </motion.aside>
   );
 };

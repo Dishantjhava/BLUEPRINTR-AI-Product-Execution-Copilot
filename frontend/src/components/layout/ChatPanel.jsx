@@ -8,16 +8,26 @@ import {
   Maximize2,
   Minimize2,
   Trash2,
-  Download
+  Download,
+  Pin,
+  Lightbulb,
+  FileText
 } from 'lucide-react';
 import { useStore } from '../../store/useStore';
 import { motion, AnimatePresence } from 'framer-motion';
 import ReactMarkdown from 'react-markdown';
 
 const ChatPanel = () => {
-  const { isDark, isChatOpen, toggleChat, messages, addMessage, clearMessages } = useStore();
+  const { isDark, isChatOpen, toggleChat, messages, addMessage, clearMessages, initMessages, projects } = useStore();
   const [input, setInput] = useState('');
+  const latestProject = projects && projects.length > 0 ? projects[0] : null;
   const scrollRef = useRef(null);
+
+  // Initialise context-aware greeting on first mount
+  useEffect(() => {
+    initMessages();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -116,11 +126,11 @@ const ChatPanel = () => {
               ref={scrollRef}
               className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar"
             >
-              {messages.map((msg) => (
-                <div 
-                  key={msg.id}
-                  className={`flex gap-3 ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}
-                >
+              {messages.map((msg, index) => (
+                <div key={msg.id} className="space-y-4">
+                  <div 
+                    className={`flex gap-3 ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}
+                  >
                   <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${
                     msg.role === 'assistant' 
                       ? 'bg-indigo-600/10 text-indigo-500' 
@@ -138,7 +148,8 @@ const ChatPanel = () => {
                         <div className={`prose prose-sm max-w-none ${isDark ? 'prose-invert' : ''} prose-p:leading-relaxed prose-pre:bg-black/50 prose-pre:p-2 prose-pre:rounded-lg prose-headings:font-bold prose-headings:mt-2 prose-headings:mb-1 prose-p:my-1 prose-ul:my-1 prose-li:my-0`}>
                           <ReactMarkdown>{msg.content}</ReactMarkdown>
                         </div>
-                        {msg.content.length > 50 && (
+                        {/* Download only for real AI plans (contain markdown headings) */}
+                        {/^#{1,3} /m.test(msg.content) && (
                           <button 
                             onClick={() => handleDownload(msg.content)}
                             className={`mt-4 self-start flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
@@ -155,7 +166,15 @@ const ChatPanel = () => {
                     )}
                   </div>
                 </div>
-              ))}
+                {index === 0 && messages.length === 1 && msg.role === 'assistant' && (
+                  <InitialChatSuggestions 
+                    setInput={setInput} 
+                    isDark={isDark} 
+                    latestProject={latestProject} 
+                  />
+                )}
+              </div>
+            ))}
             </div>
 
             {/* Input */}
@@ -196,3 +215,62 @@ const ChatPanel = () => {
 };
 
 export default ChatPanel;
+
+const InitialChatSuggestions = ({ setInput, isDark, latestProject }) => (
+  <motion.div 
+    initial={{ opacity: 0, y: 10 }}
+    animate={{ opacity: 1, y: 0 }}
+    transition={{ delay: 0.2 }}
+    className="ml-11 mt-4 space-y-4 max-w-[85%]"
+  >
+    {latestProject && (
+      <button 
+        onClick={() => setInput(`Continue working on: ${latestProject.name}`)}
+        className={`w-full text-left p-3 rounded-xl border transition-all flex items-start gap-3 ${
+          isDark 
+            ? 'bg-white/5 border-white/10 hover:bg-white/10' 
+            : 'bg-white border-gray-200 shadow-sm hover:border-indigo-300 hover:shadow-md'
+        }`}
+      >
+        <Pin size={16} className={`flex-shrink-0 mt-0.5 ${isDark ? 'text-indigo-400' : 'text-indigo-600'}`} />
+        <div>
+          <div className={`text-sm font-semibold leading-tight ${isDark ? 'text-white' : 'text-gray-900'}`}>
+            Continue: {latestProject.name}
+          </div>
+          <div className={`text-[11px] mt-1 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+            Last edited {new Date(latestProject.updated || Date.now()).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+          </div>
+        </div>
+      </button>
+    )}
+
+    <div className="space-y-2 pt-2">
+      <div className={`text-xs font-semibold px-1 ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>Or try asking:</div>
+      
+      <button 
+        onClick={() => setInput("Help me refine my idea")}
+        className={`w-full text-left p-3 rounded-xl border transition-all flex items-center gap-3 ${
+          isDark 
+            ? 'bg-white/5 border-white/10 hover:bg-white/10' 
+            : 'bg-white border-gray-200 shadow-sm hover:bg-gray-50 hover:border-gray-300'
+        }`}
+      >
+        <Lightbulb size={16} className="text-amber-500" />
+        <span className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>Help me refine my idea</span>
+      </button>
+
+      <button 
+        onClick={() => setInput("How does blueprinting work?")}
+        className={`w-full text-left p-3 rounded-xl border transition-all flex items-center gap-3 ${
+          isDark 
+            ? 'bg-white/5 border-white/10 hover:bg-white/10' 
+            : 'bg-white border-gray-200 shadow-sm hover:bg-gray-50 hover:border-gray-300'
+        }`}
+      >
+        <FileText size={16} className="text-emerald-500" />
+        <span className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>How does blueprinting work?</span>
+      </button>
+    </div>
+  </motion.div>
+);
+

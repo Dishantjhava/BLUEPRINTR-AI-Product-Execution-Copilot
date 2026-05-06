@@ -1,11 +1,12 @@
 import React, { useEffect } from 'react';
 import Sidebar from '../components/layout/Sidebar';
 import ChatPanel from '../components/layout/ChatPanel';
+import AvatarMenu from '../components/layout/AvatarMenu';
 import { useStore } from '../store/useStore';
 import { MessageSquare, Sparkles } from 'lucide-react';
 
 const MainLayout = ({ children }) => {
-  const { isDark, isChatOpen, toggleChat, userProfile } = useStore();
+  const { isDark, isChatOpen, toggleChat } = useStore();
 
   useEffect(() => {
     // Sync theme with HTML class
@@ -28,18 +29,9 @@ const MainLayout = ({ children }) => {
         isDark ? 'bg-[#000000]' : 'bg-[#F9FAFB]'
       }`}>
         {/* Top Header */}
-        <header className={`h-16 flex items-center justify-between px-8 border-b transition-colors duration-300 ${
+        <header className={`h-16 flex items-center justify-end px-8 border-b transition-colors duration-300 ${
           isDark ? 'border-[#222222] bg-[#000000]' : 'border-gray-200 bg-white'
         }`}>
-          <div className="flex items-center gap-2">
-            <span className={`text-xs font-semibold px-2 py-1 rounded bg-indigo-500/10 text-indigo-500`}>
-              BETA
-            </span>
-            <span className={`text-sm font-medium ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
-              Version 1.0.4
-            </span>
-          </div>
-          
           <div className="flex items-center gap-4">
              {!isChatOpen && (
                <button 
@@ -50,11 +42,7 @@ const MainLayout = ({ children }) => {
                  Open Assistant
                </button>
              )}
-             {userProfile && (
-               <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-500 flex items-center justify-center text-xs font-bold text-white shadow-md cursor-pointer hover:scale-105 transition-transform" title={userProfile.name}>
-                 {userProfile.initials}
-               </div>
-             )}
+             <AvatarMenu />
           </div>
         </header>
 

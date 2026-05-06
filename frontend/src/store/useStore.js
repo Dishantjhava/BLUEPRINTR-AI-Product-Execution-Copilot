@@ -81,13 +81,22 @@ export const useStore = create(
       // Chat State
       isChatOpen: true,
       toggleChat: () => set((state) => ({ isChatOpen: !state.isChatOpen })),
-      messages: [
-        { 
-          id: 1, 
-          role: 'assistant', 
-          content: 'Hello! I am your AI Product Execution Copilot. Describe your idea and I will help you build a full-stack blueprint.' 
-        }
-      ],
+      messages: [],
+      initMessages: () => {
+        const { userProfile, projects } = useStore.getState();
+        const firstName = userProfile?.name?.split(' ')[0];
+        const hasPastWork = projects && projects.length > 0;
+        const greeting = firstName && hasPastWork
+          ? `Welcome back, ${firstName}! 👋 Working on something new, or continuing a project?`
+          : firstName
+          ? `Hello, ${firstName}! Describe your idea and I'll architect a full technical blueprint for you.`
+          : hasPastWork
+          ? `Welcome back! Working on something new, or continuing a project?`
+          : `Hello! Describe your idea and I'll architect a full technical blueprint — features, APIs, schemas, and starter code.`;
+        set({
+          messages: [{ id: 1, role: 'assistant', content: greeting }]
+        });
+      },
       addMessage: (msg) => set((state) => ({ 
         messages: [...state.messages, { id: Date.now(), ...msg }] 
       })),
