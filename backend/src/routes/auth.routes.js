@@ -25,13 +25,13 @@ router.post('/signup', async (req, res) => {
     const user = new User({ name, email, password });
     await user.save();
 
-    const token = jwt.sign({ userId: user._id }, JWT_SECRET, { expiresIn: '7d' });
+    const token = jwt.sign({ userId: user._id }, JWT_SECRET, { expiresIn: '24h' });
 
     res.cookie('blueprintr_token', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
-      maxAge: 7 * 24 * 60 * 60 * 1000
+      maxAge: 24 * 60 * 60 * 1000
     });
 
     res.status(201).json({
@@ -63,13 +63,13 @@ router.post('/signin', async (req, res) => {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
-    const token = jwt.sign({ userId: user._id }, JWT_SECRET, { expiresIn: '7d' });
+    const token = jwt.sign({ userId: user._id }, JWT_SECRET, { expiresIn: '24h' });
 
     res.cookie('blueprintr_token', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
-      maxAge: 7 * 24 * 60 * 60 * 1000
+      maxAge: 24 * 60 * 60 * 1000
     });
 
     res.json({
@@ -104,7 +104,13 @@ router.post('/google', async (req, res) => {
     let user = await User.findOne({ email });
 
     if (user) {
-      // Update googleId if not present
+      // Block if this is a password-based account that hasn't linked Google
+      if (user.password && !user.googleId) {
+        return res.status(400).json({
+          error: 'An account with this email already exists. Please sign in with your password.'
+        });
+      }
+      // Update googleId if not present (e.g. GitHub-only user linking Google)
       if (!user.googleId) {
         user.googleId = googleId;
         await user.save();
@@ -115,19 +121,18 @@ router.post('/google', async (req, res) => {
         name,
         email,
         googleId,
-        // Password is not required per our schema for OAuth users
       });
       await user.save();
     }
 
     // Generate our app's JWT
-    const token = jwt.sign({ userId: user._id }, JWT_SECRET, { expiresIn: '7d' });
+    const token = jwt.sign({ userId: user._id }, JWT_SECRET, { expiresIn: '24h' });
 
     res.cookie('blueprintr_token', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
-      maxAge: 7 * 24 * 60 * 60 * 1000
+      maxAge: 24 * 60 * 60 * 1000
     });
 
     res.json({
@@ -208,6 +213,13 @@ router.post('/github', async (req, res) => {
     let user = await User.findOne({ email });
 
     if (user) {
+      // Block if this is a password-based account that hasn't linked GitHub
+      if (user.password && !user.githubId) {
+        return res.status(400).json({
+          error: 'An account with this email already exists. Please sign in with your password.'
+        });
+      }
+      // Update githubId if not present (e.g. Google-only user linking GitHub)
       if (!user.githubId) {
         user.githubId = githubId;
         await user.save();
@@ -222,13 +234,13 @@ router.post('/github', async (req, res) => {
     }
 
     // 5. Generate app JWT
-    const token = jwt.sign({ userId: user._id }, JWT_SECRET, { expiresIn: '7d' });
+    const token = jwt.sign({ userId: user._id }, JWT_SECRET, { expiresIn: '24h' });
 
     res.cookie('blueprintr_token', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
-      maxAge: 7 * 24 * 60 * 60 * 1000
+      maxAge: 24 * 60 * 60 * 1000
     });
 
     res.json({
@@ -243,18 +255,32 @@ router.post('/github', async (req, res) => {
 });
 
 // Get current user
-router.get('/me', protect, (req, res) => {
-  res.json({
-    success: true,
-    user: { id: req.user._id, name: req.user.name, email: req.user.email }
-  });
+router.get('/me', protect, async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id)
+      .select('name email googleId githubId createdAt')
+      .lean();
+
+    if (!user) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    res.json({
+      success: true,
+      user: { id: user._id, name: user.name, email: user.email, createdAt: user.createdAt }
+    });
+  } catch (error) {
+    console.error('Get Me Error:', error);
+    res.status(500).json({ error: 'Failed to fetch user profile' });
+  }
 });
 
 // Logout
 router.post('/logout', (req, res) => {
-  res.cookie('blueprintr_token', '', {
+  res.clearCookie('blueprintr_token', {
     httpOnly: true,
-    expires: new Date(0),
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'strict',
   });
   res.json({ success: true, message: 'Logged out successfully' });
 });
