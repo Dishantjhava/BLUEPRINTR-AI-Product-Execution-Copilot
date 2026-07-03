@@ -51,12 +51,21 @@ ${message}
       `,
     };
 
-    await transporter.sendMail(mailOptions);
-
-    res.json({ success: true, message: 'Email sent successfully' });
+    try {
+      await transporter.sendMail(mailOptions);
+      res.json({ success: true, message: 'Email sent successfully' });
+    } catch (emailError) {
+      console.warn('SMTP Send Failed. Falling back to Console Logging:', emailError.message);
+      console.log('--- DEMO / FALLBACK SUPPORT TICKET ---');
+      console.log(`From: ${firstName || 'Unknown'} ${lastName || ''} <${email}>`);
+      console.log(`Subject: ${subject || 'New Message'}`);
+      console.log('Message:', message);
+      console.log('--------------------------------------');
+      res.json({ success: true, message: 'Email logged to server console (SMTP fallback)' });
+    }
   } catch (error) {
-    console.error('Support Email Error:', error);
-    res.status(500).json({ error: 'Failed to send support email' });
+    console.error('Support Route Error:', error);
+    res.status(500).json({ error: 'Failed to process support request' });
   }
 });
 

@@ -149,12 +149,13 @@ GUIDELINES:
 - Keep output structured, concise, and production-oriented`;
 
     const response = await openai.chat.completions.create({
-      model: "google/gemini-2.0-flash-001",
+      model: "google/gemini-2.5-flash",
       messages: [
         { role: "system", content: prompt },
         { role: "user", content: `Input Idea: "${idea}"` }
       ],
-      response_format: { type: "json_object" } // Enforce JSON if supported
+      response_format: { type: "json_object" }, // Enforce JSON if supported
+      max_tokens: 8000
     });
 
     const responseText = response.choices[0].message.content.trim();
@@ -193,24 +194,16 @@ app.post('/api/chat', async (req, res) => {
   }) : defaultOpenai;
 
   try {
-    const systemPrompt = `You are an AI Product Execution Copilot. You help users refine their software architecture blueprints. 
+    const systemPrompt = `You are an AI Product Execution Copilot. You help developers refine, build, and debug their software architecture blueprints.
 Current blueprint context:
 ${blueprint ? JSON.stringify(blueprint, null, 2) : "No blueprint generated yet."}
 
-When the user asks a question or requests improvements, you must ALWAYS format your response as a comprehensive "Implementation Plan". 
-Structure your response EXACTLY like a markdown file with the following sections:
-
-# Implementation Plan: [Topic]
-## Executive Summary
-(Brief, concise answer to their question)
-## Step-by-Step Execution
-(Detailed, numbered steps to implement the changes)
-## Code & Architecture Updates
-(Specific schema changes, API endpoints, or code snippets needed)
-## Testing & Verification
-(Brief instructions on how to test the changes)
-
-Do not output standard conversational text outside of this markdown structure. Use bolding, lists, and code blocks heavily to make it easy to read.`;
+CRITICAL RULES:
+- Reference actual feature names, task titles, and API paths from the provided blueprint context. Never give generic advice that could apply to any project.
+- Do NOT generate a formal document with headers like "Executive Summary" or "Implementation Plan" unless the user explicitly asks for a document or report.
+- If the user says "continue working on X", look at the blueprint's incomplete tasks/roadmap and suggest the next 2-3 concrete actions.
+- Keep responses conversational, specific, and actionable — like a senior engineer reviewing the actual codebase, not a consultant writing a proposal.
+- Use markdown lists, bold text, and code blocks for readability where appropriate.`;
 
     const apiMessages = [
       { role: "system", content: systemPrompt },
@@ -218,8 +211,10 @@ Do not output standard conversational text outside of this markdown structure. U
     ];
 
     const response = await openai.chat.completions.create({
-      model: "google/gemini-2.0-flash-001",
+      model: "google/gemini-2.5-flash",
       messages: apiMessages,
+      max_tokens: 4000,
+      temperature: 0.6
     });
 
     res.json({ success: true, reply: response.choices[0].message.content });
