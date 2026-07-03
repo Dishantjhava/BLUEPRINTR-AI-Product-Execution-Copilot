@@ -14,7 +14,14 @@ export const useStore = create(
       
       // Blueprint State
       blueprint: null,
-      setBlueprint: (data) => set({ blueprint: data }),
+      setBlueprint: (data) => set({ blueprint: data, lastBlueprintId: data?._id || null }),
+      lastBlueprintId: null,
+      setLastBlueprintId: (id) => set({ lastBlueprintId: id }),
+
+      // Save Warning (survives navigation from IdeaInputPage → DashboardPage)
+      saveWarning: null,
+      setSaveWarning: (msg) => set({ saveWarning: msg }),
+      clearSaveWarning: () => set({ saveWarning: null }),
       
       // Projects History State
       projects: [],
@@ -106,6 +113,7 @@ export const useStore = create(
       name: 'blueprintr-storage',
       partialize: (state) => ({ 
         isDark: state.isDark,
+        lastBlueprintId: state.lastBlueprintId,
         projects: state.projects,
         folders: state.folders,
         aiPreferences: state.aiPreferences
