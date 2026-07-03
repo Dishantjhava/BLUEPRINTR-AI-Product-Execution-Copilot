@@ -31,7 +31,8 @@ function App() {
 
         {/* Main App Pages (With Sidebar/Chat) */}
         <Route path="/" element={<MainLayout><IdeaInputPage /></MainLayout>} />
-        <Route path="/dashboard/*" element={<MainLayout><DashboardPage /></MainLayout>} />
+        <Route path="/dashboard" element={<MainLayout><DashboardPage /></MainLayout>} />
+        <Route path="/dashboard/:id" element={<MainLayout><DashboardPage /></MainLayout>} />
         <Route path="/chats" element={<MainLayout><ChatsPage /></MainLayout>} />
         <Route path="/settings" element={<MainLayout><SettingsPage /></MainLayout>} />
         <Route path="/support" element={<MainLayout><SupportPage /></MainLayout>} />

@@ -384,8 +384,14 @@ const ChatsPage = () => {
                     key={chat.id}
                     onClick={() => {
                       if (chat.data && !renameChatId && !isSelected) {
-                        setBlueprint(chat.data);
-                        navigate('/dashboard');
+                        if (chat.blueprintId) {
+                          // Navigate with the persisted blueprint ID
+                          navigate(`/dashboard/${chat.blueprintId}`);
+                        } else {
+                          // Fallback for older projects without a saved blueprintId
+                          setBlueprint(chat.data);
+                          navigate('/dashboard');
+                        }
                       }
                     }}
                     initial={{ opacity: 0, y: 10 }}

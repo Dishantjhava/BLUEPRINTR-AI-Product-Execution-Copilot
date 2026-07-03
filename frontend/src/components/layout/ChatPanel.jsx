@@ -216,61 +216,70 @@ const ChatPanel = () => {
 
 export default ChatPanel;
 
-const InitialChatSuggestions = ({ setInput, isDark, latestProject }) => (
-  <motion.div 
-    initial={{ opacity: 0, y: 10 }}
-    animate={{ opacity: 1, y: 0 }}
-    transition={{ delay: 0.2 }}
-    className="ml-11 mt-4 space-y-4 max-w-[85%]"
-  >
-    {latestProject && (
-      <button 
-        onClick={() => setInput(`Continue working on: ${latestProject.name}`)}
-        className={`w-full text-left p-3 rounded-xl border transition-all flex items-start gap-3 ${
-          isDark 
-            ? 'bg-white/5 border-white/10 hover:bg-white/10' 
-            : 'bg-white border-gray-200 shadow-sm hover:border-indigo-300 hover:shadow-md'
-        }`}
-      >
-        <Pin size={16} className={`flex-shrink-0 mt-0.5 ${isDark ? 'text-indigo-400' : 'text-indigo-600'}`} />
-        <div>
-          <div className={`text-sm font-semibold leading-tight ${isDark ? 'text-white' : 'text-gray-900'}`}>
-            Continue: {latestProject.name}
-          </div>
-          <div className={`text-[11px] mt-1 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
-            Last edited {new Date(latestProject.updated || Date.now()).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-          </div>
-        </div>
-      </button>
-    )}
+const InitialChatSuggestions = ({ setInput, isDark, latestProject }) => {
+  const { setBlueprint } = useStore();
 
-    <div className="space-y-2 pt-2">
-      <div className={`text-xs font-semibold px-1 ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>Or try asking:</div>
-      
-      <button 
-        onClick={() => setInput("Help me refine my idea")}
-        className={`w-full text-left p-3 rounded-xl border transition-all flex items-center gap-3 ${
-          isDark 
-            ? 'bg-white/5 border-white/10 hover:bg-white/10' 
-            : 'bg-white border-gray-200 shadow-sm hover:bg-gray-50 hover:border-gray-300'
-        }`}
-      >
-        <Lightbulb size={16} className="text-amber-500" />
-        <span className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>Help me refine my idea</span>
-      </button>
+  return (
+    <motion.div 
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.2 }}
+      className="ml-11 mt-4 space-y-4 max-w-[85%]"
+    >
+      {latestProject && (
+        <button 
+          onClick={() => {
+            if (latestProject.data) {
+              setBlueprint(latestProject.data);
+            }
+            setInput("What are the next 3 things I should work on for this project based on incomplete tasks?");
+          }}
+          className={`w-full text-left p-3 rounded-xl border transition-all flex items-start gap-3 ${
+            isDark 
+              ? 'bg-white/5 border-white/10 hover:bg-white/10' 
+              : 'bg-white border-gray-200 shadow-sm hover:border-indigo-300 hover:shadow-md'
+          }`}
+        >
+          <Pin size={16} className={`flex-shrink-0 mt-0.5 ${isDark ? 'text-indigo-400' : 'text-indigo-600'}`} />
+          <div>
+            <div className={`text-sm font-semibold leading-tight ${isDark ? 'text-white' : 'text-gray-900'}`}>
+              Continue: {latestProject.name}
+            </div>
+            <div className={`text-[11px] mt-1 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+              Last edited {new Date(latestProject.updated || Date.now()).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+            </div>
+          </div>
+        </button>
+      )}
 
-      <button 
-        onClick={() => setInput("How does blueprinting work?")}
-        className={`w-full text-left p-3 rounded-xl border transition-all flex items-center gap-3 ${
-          isDark 
-            ? 'bg-white/5 border-white/10 hover:bg-white/10' 
-            : 'bg-white border-gray-200 shadow-sm hover:bg-gray-50 hover:border-gray-300'
-        }`}
-      >
-        <FileText size={16} className="text-emerald-500" />
-        <span className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>How does blueprinting work?</span>
-      </button>
-    </div>
-  </motion.div>
-);
+      <div className="space-y-2 pt-2">
+        <div className={`text-xs font-semibold px-1 ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>Or try asking:</div>
+        
+        <button 
+          onClick={() => setInput("Help me refine my idea")}
+          className={`w-full text-left p-3 rounded-xl border transition-all flex items-center gap-3 ${
+            isDark 
+              ? 'bg-white/5 border-white/10 hover:bg-white/10' 
+              : 'bg-white border-gray-200 shadow-sm hover:bg-gray-50 hover:border-gray-300'
+          }`}
+        >
+          <Lightbulb size={16} className="text-amber-500" />
+          <span className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>Help me refine my idea</span>
+        </button>
+
+        <button 
+          onClick={() => setInput("How does blueprinting work?")}
+          className={`w-full text-left p-3 rounded-xl border transition-all flex items-center gap-3 ${
+            isDark 
+              ? 'bg-white/5 border-white/10 hover:bg-white/10' 
+              : 'bg-white border-gray-200 shadow-sm hover:bg-gray-50 hover:border-gray-300'
+          }`}
+        >
+          <FileText size={16} className="text-emerald-500" />
+          <span className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>How does blueprinting work?</span>
+        </button>
+      </div>
+    </motion.div>
+  );
+};
 

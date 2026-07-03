@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { useStore } from '../store/useStore';
+import { API } from '../services/api.service';
 import {
   ArrowRight, Zap, Terminal, Search,
   MessageSquare, Lightbulb, Rocket,
@@ -42,6 +43,7 @@ const IdeaInputPage = () => {
   const {
     setBlueprint, isDark, addMessage, addProject,
     aiPreferences, projects, userProfile,
+    setLastBlueprintId, setSaveWarning,
   } = useStore();
 
   const navigate = useNavigate();
@@ -78,20 +80,50 @@ const IdeaInputPage = () => {
       const data = await res.json();
       if (data.success) {
         setBlueprint(data.solution);
-        addProject({
-          id:       Date.now(),
-          name:     data.solution.product_summary?.title || idea || 'Untitled Project',
-          project:  'Draft',
-          updated:  Date.now(),
-          isActive: true,
-          data:     data.solution,
-        });
         addMessage({ role: 'assistant', content: `Blueprint for "${data.solution.product_summary.title}" generated! View it in the dashboard.` });
-        // Logged-out: intercept and show save-prompt modal
-        if (!isLoggedIn) {
-          setShowSaveModal(true);
+
+        if (isLoggedIn) {
+          // Save to MongoDB for persistence
+          try {
+            const saved = await API.saveBlueprint(idea, data.solution);
+            const blueprintId = saved.blueprint?._id;
+            setLastBlueprintId(blueprintId);
+            addProject({
+              id:          Date.now(),
+              name:        data.solution.product_summary?.title || idea || 'Untitled Project',
+              project:     'Draft',
+              updated:     Date.now(),
+              isActive:    true,
+              data:        data.solution,
+              blueprintId: blueprintId,
+            });
+            navigate(`/dashboard/${blueprintId}`);
+          } catch (saveErr) {
+            console.error('Failed to save blueprint:', saveErr);
+            // Save failed — blueprint is already in Zustand (line 81)
+            // Navigate to ephemeral dashboard, warn the user
+            addProject({
+              id:       Date.now(),
+              name:     data.solution.product_summary?.title || idea || 'Untitled Project',
+              project:  'Draft',
+              updated:  Date.now(),
+              isActive: true,
+              data:     data.solution,
+            });
+            setSaveWarning('Blueprint generated but could not be saved to the cloud. Your work will be lost on refresh.');
+            navigate('/dashboard');
+          }
         } else {
-          navigate('/dashboard');
+          // Guest: ephemeral blueprint, prompt to sign up
+          addProject({
+            id:       Date.now(),
+            name:     data.solution.product_summary?.title || idea || 'Untitled Project',
+            project:  'Draft',
+            updated:  Date.now(),
+            isActive: true,
+            data:     data.solution,
+          });
+          setShowSaveModal(true);
         }
       } else {
         setError(data.error || 'Failed to generate blueprint');
@@ -442,7 +474,16 @@ const IdeaInputPage = () => {
                   initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.12 + i * 0.06 }}
-                  onClick={() => { if (project.data) { setBlueprint(project.data); navigate('/dashboard'); } }}
+                  onClick={() => {
+                    if (project.data) {
+                      if (project.blueprintId) {
+                        navigate(`/dashboard/${project.blueprintId}`);
+                      } else {
+                        setBlueprint(project.data);
+                        navigate('/dashboard');
+                      }
+                    }
+                  }}
                   className={`group text-left p-4 rounded-xl border transition-all duration-200 ${
                     isDark
                       ? 'bg-white/[0.03] border-white/[0.07] hover:bg-white/[0.07] hover:border-indigo-500/30'
